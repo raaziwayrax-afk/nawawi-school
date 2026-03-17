@@ -8,12 +8,12 @@ app.use(cors());
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
-// DATABASE CONNECTION - Hubi in magaca iyo password-ka ay sax yihiin
+// HUBI: In xogtani ay tahay midda saxda ah ee MongoDB-gaaga
 const mongoURI = "mongodb+srv://raaziwayrax_db_user:raasi1234@cluster0.cvcctca.mongodb.net/NawawiDB?retryWrites=true&w=majority";
 
 mongoose.connect(mongoURI)
-    .then(() => console.log("✅ DATABASE-KU WAA SHUQAYNAYAA"))
-    .catch(err => console.error("❌ DATABASE-KA AYAA DIIDAN:", err));
+    .then(() => console.log("✅ DATABASE-KU WAA LIVE"))
+    .catch(err => console.error("❌ DATABASE-KU WAA DIIDAN YAHAY:", err));
 
 const StudentSchema = new mongoose.Schema({
     nbsCode: { type: String, unique: true, required: true },
@@ -35,14 +35,15 @@ const Student = mongoose.model('Student', StudentSchema);
 app.post('/api/login', async (req, res) => {
     const { role, id, pass } = req.body;
     if (role === 'admin' && id === 'nawawi_admin' && pass === '7209379') return res.json({ success: true, role: 'admin' });
-    const s = await Student.findOne({ nbsCode: id, password: pass });
+    const s = await Student.findOne({ nbsCode: id, password: pass }).lean();
     if (s) res.json({ success: true, role: 'student', data: s });
     else res.status(401).json({ success: false });
 });
 
-// GET LIST - Halkan waxaa lagu soo bandhigayaa ardayda
+// Soo saarista Liiska (Halkan ayaa ah halka sawirkaaga ka muuqata)
 app.get('/api/students/:c/:s', async (req, res) => {
     try {
+        // Waxaan ka raadinaynaa Database-ka fasalka iyo qaybta uu doortay
         const list = await Student.find({ class: req.params.c, section: req.params.s }).sort({fullName: 1});
         res.json(list);
     } catch (err) {
@@ -50,15 +51,16 @@ app.get('/api/students/:c/:s', async (req, res) => {
     }
 });
 
-// SAVE POWER (Attendance & Exams)
+// Keydinta Ardayga (Waa inaad tan isticmaashaa marka hore)
 app.post('/api/admin/save', async (req, res) => {
     try {
-        const { nbsCode, attendance, exam, ...rest } = req.body;
-        let query = { $set: rest };
-        if (attendance) query.$push = { attendance: attendance[0] };
-        if (exam) query.$set.exam = exam;
-        
-        await Student.findOneAndUpdate({ nbsCode }, query, { upsert: true });
+        const { nbsCode, attendance, exam, fees, ...rest } = req.body;
+        let update = { $set: rest };
+        if (attendance) update.$push = { attendance: attendance[0] };
+        if (exam) update.$set.exam = exam;
+        if (fees) update.$set.fees = fees;
+
+        await Student.findOneAndUpdate({ nbsCode }, update, { upsert: true, new: true });
         res.json({ success: true });
     } catch (err) {
         res.status(500).json({ success: false });
@@ -66,4 +68,4 @@ app.post('/api/admin/save', async (req, res) => {
 });
 
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, '0.0.0.0', () => console.log(`🚀 SERVER IS LIVE ON ${PORT}`));
+app.listen(PORT, '0.0.0.0', () => console.log(`🚀 System Online on Port ${PORT}`));

@@ -3,72 +3,107 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nawawi School Management</title>
+    <title>Nawawi School System</title>
     <style>
-        body { font-family: sans-serif; background: #f4f7f6; padding: 20px; }
-        .section { background: white; padding: 20px; border-radius: 8px; margin-bottom: 20px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); max-width: 600px; margin-left: auto; margin-right: auto; }
-        h2 { color: #1a73e8; border-bottom: 2px solid #eee; padding-bottom: 10px; }
-        input, select, button { width: 100%; padding: 10px; margin: 10px 0; border-radius: 5px; border: 1px solid #ddd; }
-        button { background: #1a73e8; color: white; border: none; font-weight: bold; cursor: pointer; }
-        .list-item { display: flex; justify-content: space-between; padding: 10px; border-bottom: 1px solid #eee; }
-        .present { color: green; font-weight: bold; }
-        .absent { color: red; font-weight: bold; }
+        :root { --blue: #1a73e8; --green: #28a745; --red: #dc3545; --gray: #f8f9fa; }
+        body { font-family: sans-serif; background: #eee; margin: 0; padding: 20px; }
+        .container { max-width: 800px; margin: auto; background: white; padding: 25px; border-radius: 10px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
+        h1 { text-align: center; color: var(--blue); }
+        .form-group { margin-bottom: 20px; padding: 15px; border: 1px solid #ddd; border-radius: 8px; }
+        input, button { width: 100%; padding: 12px; margin-top: 10px; border-radius: 5px; border: 1px solid #ccc; box-sizing: border-box; }
+        button { background: var(--blue); color: white; font-weight: bold; border: none; cursor: pointer; }
+        .search-box { background: var(--gray); border: 2px solid var(--blue); }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { padding: 12px; border-bottom: 1px solid #ddd; text-align: left; }
+        .btn-p { background: var(--green); width: auto; padding: 5px 15px; }
+        .btn-a { background: var(--red); width: auto; padding: 5px 15px; }
     </style>
 </head>
 <body>
 
-    <div class="section">
-        <h2>Diiwaangelinta Ardayda</h2>
-        <input type="text" id="stdName" placeholder="Magaca Ardayga">
-        <input type="text" id="stdClass" placeholder="Fasalka (e.g. Form 4)">
-        <button onclick="addStudent()">Keydi Ardayga</button>
+<div class="container">
+    <h1>Nawawi School - Bosaso</h1>
+
+    <div class="form-group">
+        <h3>Diiwaangeli Arday Cusub</h3>
+        <input type="text" id="sName" placeholder="Magaca Ardayga oo buuxa">
+        <input type="text" id="sClass" placeholder="Fasalka (Tusaale: Class 8)">
+        <button onclick="saveStudent()">Keydi Ardayga</button>
     </div>
 
-    <div class="section">
-        <h2>Attendance-ka Maanta</h2>
-        <div id="attendanceList">Loading students...</div>
+    <div class="form-group">
+        <h3>Attendance-ka Maanta</h3>
+        <input type="text" id="search" class="search-box" placeholder="Ka raadi magaca halkan..." onkeyup="renderList()">
+        <table id="attendanceTable">
+            <thead>
+                <tr>
+                    <th>Magaca</th>
+                    <th>Fasalka</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody id="studentList"></tbody>
+        </table>
     </div>
+</div>
 
-    <script>
-        async function loadData() {
-            const res = await fetch('/api/students');
-            const students = await res.json();
-            const list = document.getElementById('attendanceList');
-            list.innerHTML = '';
-            
-            students.forEach(s => {
-                list.innerHTML += `
-                    <div class="list-item">
-                        <span>${s.name} (${s.class})</span>
-                        <div>
-                            <button style="width:70px; background:green;" onclick="mark('${s._id}', 'Present')">P</button>
-                            <button style="width:70px; background:red;" onclick="mark('${s._id}', 'Absent')">A</button>
-                        </div>
-                    </div>`;
-            });
-        }
+<script>
+    let students = [];
 
-        async function addStudent() {
-            const name = document.getElementById('stdName').value;
-            const className = document.getElementById('stdClass').value;
-            await fetch('/api/students', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({name, class: className})
-            });
-            location.reload();
-        }
+    // Ka soo qaad ardayda database-ka
+    async function loadStudents() {
+        const res = await fetch('/api/students');
+        students = await res.json();
+        renderList();
+    }
 
-        async function mark(id, status) {
-            await fetch('/api/attendance', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({studentId: id, status: status})
-            });
-            alert(`Calaamadda ${status} waa la keydiyey!`);
-        }
+    // Ku bandhig ardayda jadwalka (leh Search)
+    function renderList() {
+        const searchTerm = document.getElementById('search').value.toLowerCase();
+        const tbody = document.getElementById('studentList');
+        tbody.innerHTML = '';
 
-        loadData();
-    </script>
+        students.filter(s => s.name.toLowerCase().includes(searchTerm)).forEach(s => {
+            tbody.innerHTML += `
+                <tr>
+                    <td>${s.name}</td>
+                    <td>${s.class}</td>
+                    <td>
+                        <button class="btn-p" onclick="markAttendance('${s._id}', 'Present')">P</button>
+                        <button class="btn-a" onclick="markAttendance('${s._id}', 'Absent')">A</button>
+                    </td>
+                </tr>`;
+        });
+    }
+
+    // Save Student
+    async function saveStudent() {
+        const name = document.getElementById('sName').value;
+        const className = document.getElementById('sClass').value;
+        if(!name || !className) return alert("Fadlan buuxi xogta");
+
+        await fetch('/api/students', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ name, class: className })
+        });
+        document.getElementById('sName').value = '';
+        document.getElementById('sClass').value = '';
+        loadStudents();
+    }
+
+    // Mark Attendance
+    async function markAttendance(id, status) {
+        await fetch('/api/attendance', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ studentId: id, status: status })
+        });
+        alert(`Ardayga waa la calaamadeeyay: ${status}`);
+    }
+
+    loadStudents();
+</script>
+
 </body>
 </html>

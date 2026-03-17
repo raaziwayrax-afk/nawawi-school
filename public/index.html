@@ -2,108 +2,159 @@
 <html lang="so">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nawawi School System</title>
+    <title>Nawawi Management System</title>
     <style>
-        :root { --blue: #1a73e8; --green: #28a745; --red: #dc3545; --gray: #f8f9fa; }
-        body { font-family: sans-serif; background: #eee; margin: 0; padding: 20px; }
-        .container { max-width: 800px; margin: auto; background: white; padding: 25px; border-radius: 10px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
-        h1 { text-align: center; color: var(--blue); }
-        .form-group { margin-bottom: 20px; padding: 15px; border: 1px solid #ddd; border-radius: 8px; }
-        input, button { width: 100%; padding: 12px; margin-top: 10px; border-radius: 5px; border: 1px solid #ccc; box-sizing: border-box; }
-        button { background: var(--blue); color: white; font-weight: bold; border: none; cursor: pointer; }
-        .search-box { background: var(--gray); border: 2px solid var(--blue); }
-        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-        th, td { padding: 12px; border-bottom: 1px solid #ddd; text-align: left; }
-        .btn-p { background: var(--green); width: auto; padding: 5px 15px; }
-        .btn-a { background: var(--red); width: auto; padding: 5px 15px; }
+        :root { --blue: #2c3e50; --gold: #f1c40f; --green: #27ae60; --red: #e74c3c; }
+        body { font-family: 'Segoe UI', sans-serif; margin: 0; background: #f4f4f4; }
+        .login-box { width: 350px; margin: 100px auto; background: white; padding: 30px; border-radius: 10px; box-shadow: 0 5px 15px rgba(0,0,0,0.2); }
+        .dashboard { display: none; padding: 20px; }
+        .sidebar { width: 250px; background: var(--blue); color: white; height: 100vh; position: fixed; left: 0; top: 0; padding: 20px; }
+        .content { margin-left: 280px; padding: 20px; }
+        .card { background: white; padding: 20px; border-radius: 8px; margin-bottom: 20px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        input, select, button { width: 100%; padding: 12px; margin: 8px 0; border-radius: 5px; border: 1px solid #ddd; }
+        button { background: var(--blue); color: white; cursor: pointer; border: none; font-weight: bold; }
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+        th, td { padding: 12px; border-bottom: 1px solid #eee; text-align: left; }
+        .status-p { color: var(--green); font-weight: bold; }
+        .status-a { color: var(--red); font-weight: bold; }
     </style>
 </head>
 <body>
 
-<div class="container">
-    <h1>Nawawi School - Bosaso</h1>
+<div id="loginSection" class="login-box">
+    <h2 style="text-align: center;">Nawawi Portal</h2>
+    <select id="roleSelect" onchange="toggleLoginInputs()">
+        <option value="student">Student Portal</option>
+        <option value="admin">Admin Portal</option>
+    </select>
+    <div id="adminInputs" style="display: none;">
+        <input type="text" id="adminUser" placeholder="Username">
+        <input type="password" id="adminPass" placeholder="Password">
+    </div>
+    <div id="studentInputs">
+        <input type="text" id="studentCode" placeholder="Geli Student Code (Ex: STU101)">
+    </div>
+    <button onclick="login()">Login</button>
+</div>
 
-    <div class="form-group">
-        <h3>Diiwaangeli Arday Cusub</h3>
-        <input type="text" id="sName" placeholder="Magaca Ardayga oo buuxa">
-        <input type="text" id="sClass" placeholder="Fasalka (Tusaale: Class 8)">
-        <button onclick="saveStudent()">Keydi Ardayga</button>
+<div id="dashboard" class="dashboard">
+    <div class="sidebar">
+        <h3>Nawawi School</h3>
+        <hr>
+        <div id="menu"></div>
+        <button onclick="location.reload()" style="background: var(--red); margin-top: 20px;">Logout</button>
     </div>
 
-    <div class="form-group">
-        <h3>Attendance-ka Maanta</h3>
-        <input type="text" id="search" class="search-box" placeholder="Ka raadi magaca halkan..." onkeyup="renderList()">
-        <table id="attendanceTable">
-            <thead>
-                <tr>
-                    <th>Magaca</th>
-                    <th>Fasalka</th>
-                    <th>Action</th>
-                </tr>
-            </thead>
-            <tbody id="studentList"></tbody>
-        </table>
+    <div class="content">
+        <div id="mainView"></div>
     </div>
 </div>
 
 <script>
-    let students = [];
+    let currentUser = null;
 
-    // Ka soo qaad ardayda database-ka
-    async function loadStudents() {
-        const res = await fetch('/api/students');
-        students = await res.json();
-        renderList();
+    function toggleLoginInputs() {
+        const role = document.getElementById('roleSelect').value;
+        document.getElementById('adminInputs').style.display = role === 'admin' ? 'block' : 'none';
+        document.getElementById('studentInputs').style.display = role === 'student' ? 'block' : 'none';
     }
 
-    // Ku bandhig ardayda jadwalka (leh Search)
-    function renderList() {
-        const searchTerm = document.getElementById('search').value.toLowerCase();
-        const tbody = document.getElementById('studentList');
-        tbody.innerHTML = '';
+    async function login() {
+        const role = document.getElementById('roleSelect').value;
+        let res;
+        if(role === 'admin') {
+            res = await fetch('/api/admin/login', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({username: document.getElementById('adminUser').value, password: document.getElementById('adminPass').value})
+            });
+        } else {
+            res = await fetch('/api/student/login', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({code: document.getElementById('studentCode').value})
+            });
+        }
 
-        students.filter(s => s.name.toLowerCase().includes(searchTerm)).forEach(s => {
-            tbody.innerHTML += `
-                <tr>
-                    <td>${s.name}</td>
-                    <td>${s.class}</td>
-                    <td>
-                        <button class="btn-p" onclick="markAttendance('${s._id}', 'Present')">P</button>
-                        <button class="btn-a" onclick="markAttendance('${s._id}', 'Absent')">A</button>
-                    </td>
-                </tr>`;
-        });
+        const data = await res.json();
+        if(data.success) {
+            currentUser = data;
+            document.getElementById('loginSection').style.display = 'none';
+            document.getElementById('dashboard').style.display = 'block';
+            setupDashboard();
+        } else alert("Macluumaadku waa khalad!");
     }
 
-    // Save Student
+    function setupDashboard() {
+        const menu = document.getElementById('menu');
+        const view = document.getElementById('mainView');
+        if(currentUser.role === 'admin') {
+            menu.innerHTML = `
+                <button onclick="showAdminStudents()">Maamulka Ardayda</button>
+                <button onclick="showAdminAttendance()">Attendance & Fees</button>
+            `;
+            showAdminStudents();
+        } else {
+            menu.innerHTML = `<p>Ku soo dhowaw, ${currentUser.data.fullName}</p>`;
+            showStudentView();
+        }
+    }
+
+    // --- Admin Views ---
+    async function showAdminStudents() {
+        document.getElementById('mainView').innerHTML = `
+            <div class="card">
+                <h3>Ku dar Arday / Wax ka bedel</h3>
+                <input type="text" id="addCode" placeholder="Student Code">
+                <input type="text" id="addName" placeholder="Full Name">
+                <select id="addClass"><option value="1">Class 1</option><option value="8">Class 8</option><option value="12">Class 12</option></select>
+                <button onclick="saveStudent()">Keydi Ardayga</button>
+            </div>
+            <div id="studentListContainer"></div>
+        `;
+    }
+
     async function saveStudent() {
-        const name = document.getElementById('sName').value;
-        const className = document.getElementById('sClass').value;
-        if(!name || !className) return alert("Fadlan buuxi xogta");
+        const studentCode = document.getElementById('addCode').value;
+        const fullName = document.getElementById('addName').value;
+        const className = document.getElementById('addClass').value;
+
+        // Auto-assign subjects based on class
+        let subjects = [];
+        if(className <= 1) subjects = [{name:'Somali', score:0}, {name:'Math', score:0}, {name:'Arabic', score:0}, {name:'Deen', score:0}];
+        else if(className <= 8) subjects = Array(9).fill().map((_,i) => ({name: `Subject ${i+1}`, score:0}));
+        else subjects = Array(12).fill().map((_,i) => ({name: `Subject ${i+1}`, score:0}));
 
         await fetch('/api/students', {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({ name, class: className })
+            body: JSON.stringify({studentCode, fullName, class: className, exam: {subjects}})
         });
-        document.getElementById('sName').value = '';
-        document.getElementById('sClass').value = '';
-        loadStudents();
+        alert("Ardayga waa la keydiyey!");
     }
 
-    // Mark Attendance
-    async function markAttendance(id, status) {
-        await fetch('/api/attendance', {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({ studentId: id, status: status })
-        });
-        alert(`Ardayga waa la calaamadeeyay: ${status}`);
+    // --- Student Views ---
+    async function showStudentView() {
+        const s = currentUser.data;
+        const attRes = await fetch(`/api/attendance/${s._id}`);
+        const attendance = await attRes.json();
+        
+        document.getElementById('mainView').innerHTML = `
+            <div class="card">
+                <h2>Dashboard: ${s.fullName}</h2>
+                <p>Code: ${s.studentCode} | Class: ${s.class}</p>
+            </div>
+            <div class="card">
+                <h3>Exam Results</h3>
+                <p>Total: ${s.exam.total} | Avg: ${s.exam.average} | Grade: <strong>${s.exam.grade}</strong></p>
+                <table>${s.exam.subjects.map(sub => `<tr><td>${sub.name}</td><td>${sub.score}</td></tr>`).join('')}</table>
+            </div>
+            <div class="card">
+                <h3>Finance (Fees)</h3>
+                <p>Paid: $${s.fees.paid} / Total: $${s.fees.total}</p>
+            </div>
+        `;
     }
-
-    loadStudents();
 </script>
-
 </body>
 </html>

@@ -1,7 +1,7 @@
 {
-  "name": "nawawi-school-system",
-  "version": "1.0.0",
-  "description": "Nawawi School Management System",
+  "name": "nawawi-school-v3",
+  "version": "1.3.0",
+  "description": "Nawawi School Management System - Admin & Student Portal",
   "main": "index.js",
   "scripts": {
     "start": "node index.js"
@@ -10,6 +10,6 @@
     "express": "^4.18.2",
     "mongoose": "^8.2.0",
     "cors": "^2.8.5",
-    "dotenv": "^16.4.5"
+    "path": "^0.12.7"
   }
 }

@@ -4,74 +4,102 @@ const cors = require('cors');
 const path = require('path');
 
 const app = express();
-
-// Middleware
 app.use(cors());
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Isku xidhka MongoDB (Password: raasi1234)
+// Isku xidhka MongoDB
 const uri = "mongodb+srv://raaziwayrax_db_user:raasi1234@cluster0.cvcctca.mongodb.net/NawawiDB?retryWrites=true&w=majority";
+mongoose.connect(uri).then(() => console.log("✅ Database Linked")).catch(err => console.log(err));
 
-mongoose.connect(uri)
-    .then(() => console.log("✅ MongoDB Connected Successfully"))
-    .catch(err => console.error("❌ MongoDB Connection Error:", err));
+// --- Database Schemas ---
 
-// Student Schema & Model
-const studentSchema = new mongoose.Schema({
-    name: { type: String, required: true },
-    class: { type: String, required: true },
+const StudentSchema = new mongoose.Schema({
+    studentCode: { type: String, unique: true, required: true },
+    fullName: String,
+    class: { type: Number, min: 0, max: 12 },
     phone: String,
-    createdAt: { type: Date, default: Date.now }
+    fees: { paid: { type: Number, default: 0 }, total: { type: Number, default: 1200 } },
+    exam: {
+        subjects: [{ name: String, score: Number }],
+        total: { type: Number, default: 0 },
+        average: { type: Number, default: 0 },
+        grade: { type: String, default: 'F' }
+    }
 });
-const Student = mongoose.model('Student', studentSchema);
 
-// Attendance Schema & Model
-const attendanceSchema = new mongoose.Schema({
+const AttendanceSchema = new mongoose.Schema({
     studentId: { type: mongoose.Schema.Types.ObjectId, ref: 'Student' },
-    status: { type: String, enum: ['Present', 'Absent'], required: true },
-    date: { type: Date, default: Date.now }
+    date: String, // Format: YYYY-MM-DD
+    status: String, // Present / Absent
+    class: Number
 });
-const Attendance = mongoose.model('Attendance', attendanceSchema);
 
-// --- API ROUTES ---
+const Student = mongoose.model('Student', StudentSchema);
+const Attendance = mongoose.model('Attendance', AttendanceSchema);
 
-// 1. Diiwaangeli Arday
+// --- API Routes ---
+
+// Admin Login
+app.post('/api/admin/login', (req, res) => {
+    const { username, password } = req.body;
+    if (username === 'nawawi_admin' && password === '7209379') {
+        res.json({ success: true, role: 'admin' });
+    } else {
+        res.status(401).json({ success: false, message: "Invalid Admin Credentials" });
+    }
+});
+
+// Student Login
+app.post('/api/student/login', async (req, res) => {
+    const student = await Student.findOne({ studentCode: req.body.code });
+    if (student) res.json({ success: true, role: 'student', data: student });
+    else res.status(404).json({ message: "Student Code not found" });
+});
+
+// Admin: Add/Update Student & Auto-calculate Grades
 app.post('/api/students', async (req, res) => {
-    try {
-        const student = new Student(req.body);
-        await student.save();
-        res.status(201).json({ success: true, message: "Ardayga waa la keydiyey" });
-    } catch (err) {
-        res.status(400).json({ success: false, error: err.message });
+    const data = req.body;
+    if (data.exam && data.exam.subjects.length > 0) {
+        const total = data.exam.subjects.reduce((a, b) => a + Number(b.score), 0);
+        const avg = total / data.exam.subjects.length;
+        data.exam.total = total;
+        data.exam.average = avg.toFixed(2);
+        data.exam.grade = avg >= 90 ? 'A' : avg >= 80 ? 'B' : avg >= 70 ? 'C' : avg >= 50 ? 'D' : 'F';
     }
+    const s = await Student.findOneAndUpdate({ studentCode: data.studentCode }, data, { upsert: true, new: true });
+    res.json(s);
 });
 
-// 2. Soo saar dhammaan ardayda
-app.get('/api/students', async (req, res) => {
-    try {
-        const students = await Student.find().sort({ createdAt: -1 });
-        res.json(students);
-    } catch (err) {
-        res.status(500).json({ error: err.message });
-    }
+app.get('/api/students/:class', async (req, res) => {
+    const students = await Student.find({ class: req.params.class });
+    res.json(students);
 });
 
-// 3. Keydi Attendance
+app.delete('/api/students/:id', async (req, res) => {
+    await Student.findByIdAndDelete(req.params.id);
+    res.json({ success: true });
+});
+
+// Attendance Management
 app.post('/api/attendance', async (req, res) => {
-    try {
-        const record = new Attendance(req.body);
-        await record.save();
-        res.json({ success: true });
-    } catch (err) {
-        res.status(400).json({ error: err.message });
+    const { list, date } = req.body;
+    for (let item of list) {
+        await Attendance.findOneAndUpdate(
+            { studentId: item.studentId, date: date },
+            { status: item.status, class: item.class },
+            { upsert: true }
+        );
     }
+    res.json({ success: true });
 });
 
-// XALKA "NOT FOUND": Hadduu qofku link-ga taabto, halkan ka fura index.html
-app.get('*', (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'index.html'));
+app.get('/api/attendance/:studentId', async (req, res) => {
+    const history = await Attendance.find({ studentId: req.params.studentId });
+    res.json(history);
 });
+
+app.get('*', (req, res) => res.sendFile(path.join(__dirname, 'public', 'index.html')));
 
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`🚀 Server is running on port ${PORT}`));
+app.listen(PORT, () => console.log(`Server running on ${PORT}`));

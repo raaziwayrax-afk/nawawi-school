@@ -8,74 +8,66 @@ app.use(cors());
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Database Connection
 const uri = "mongodb+srv://raaziwayrax_db_user:raasi1234@cluster0.cvcctca.mongodb.net/NawawiDB?retryWrites=true&w=majority";
-mongoose.connect(uri).then(() => console.log("✅ NBS DB Active")).catch(err => console.error(err));
+mongoose.connect(uri).then(() => console.log("✅ NBS Official Database Connected"));
 
 // --- Schema ---
 const StudentSchema = new mongoose.Schema({
     nbsCode: { type: String, unique: true },
+    password: { type: String, default: "123456" },
     fullName: String,
     motherName: String,
     class: { type: String, enum: ['9', '10', '11', '12'] },
     section: { type: String, enum: ['A', 'B', 'C', 'D'] },
-    parent1: String,
-    parent2: String,
     fees: { paid: { type: Number, default: 0 }, total: { type: Number, default: 1200 } },
     attendance: [{
         date: String,
-        preBreak: { type: String, default: '×' },
-        postBreak: { type: String, default: '×' }
+        month: String,
+        preBreak: String,
+        postBreak: String
     }],
     exam: {
         subjects: [
-            { name: { type: String, default: 'Math' }, score: { type: Number, default: 0 } },
-            { name: { type: String, default: 'English' }, score: { type: Number, default: 0 } },
-            { name: { type: String, default: 'Science' }, score: { type: Number, default: 0 } }
+            { name: "Math", score: Number }, { name: "English", score: Number },
+            { name: "Arabic", score: Number }, { name: "Islamic", score: Number },
+            { name: "Physics", score: Number }, { name: "Chemistry", score: Number },
+            { name: "Biology", score: Number }, { name: "History", score: Number },
+            { name: "Geography", score: Number }, { name: "Somali", score: Number },
+            { name: "ICT", score: Number }, { name: "Business", score: Number }
         ],
-        total: { type: Number, default: 0 },
-        average: { type: Number, default: 0 },
-        grade: { type: String, default: 'F' }
+        total: Number, average: Number, grade: String
     }
 });
 
 const Student = mongoose.model('Student', StudentSchema);
 
-// --- Routes ---
-app.post('/api/admin/login', (req, res) => {
-    if (req.body.username === 'nawawi_admin' && req.body.password === '7209379') res.json({ success: true });
-    else res.status(401).send("Khalad");
-});
-
-app.post('/api/student/login', async (req, res) => {
-    const s = await Student.findOne({ nbsCode: req.body.nbsCode });
-    if (s) res.json({ success: true, data: s });
-    else res.status(404).send("Lama helin");
-});
-
-app.post('/api/students', async (req, res) => {
-    let data = req.body;
-    // Automatic Exam Calculation
-    if (data.exam && data.exam.subjects) {
-        let total = data.exam.subjects.reduce((a, b) => a + Number(b.score || 0), 0);
-        let avg = total / (data.exam.subjects.length || 1);
-        data.exam.total = total;
-        data.exam.average = avg.toFixed(2);
-        data.exam.grade = avg >= 90 ? 'A' : avg >= 80 ? 'B' : avg >= 70 ? 'C' : avg >= 50 ? 'D' : 'F';
+// Admin & Student Auth
+app.post('/api/login', async (req, res) => {
+    const { role, id, pass } = req.body;
+    if (role === 'admin') {
+        if (id === 'nawawi_admin' && pass === '7209379') return res.json({ success: true, role: 'admin' });
+        return res.status(401).json({ message: "Admin details incorrect" });
     }
-    const s = await Student.findOneAndUpdate({ nbsCode: data.nbsCode }, data, { upsert: true, new: true });
+    const s = await Student.findOne({ nbsCode: id, password: pass });
+    if (s) res.json({ success: true, role: 'student', data: s });
+    else res.status(404).json({ message: "ID ama Password waa khalad" });
+});
+
+// Auto-Calculate Grades
+app.post('/api/students', async (req, res) => {
+    let d = req.body;
+    if (d.exam && d.exam.subjects) {
+        let total = d.exam.subjects.reduce((a, b) => a + Number(b.score || 0), 0);
+        d.exam.total = total;
+        d.exam.average = (total / 12).toFixed(2);
+        d.exam.grade = d.exam.average >= 90 ? 'A' : d.exam.average >= 80 ? 'B' : d.exam.average >= 50 ? 'Pass' : 'F';
+    }
+    const s = await Student.findOneAndUpdate({ nbsCode: d.nbsCode }, d, { upsert: true, new: true });
     res.json(s);
 });
 
-app.get('/api/students/:class/:section', async (req, res) => {
-    const list = await Student.find({ class: req.params.class, section: req.params.section });
-    res.json(list);
+app.get('/api/students/:c/:s', async (req, res) => {
+    res.json(await Student.find({ class: req.params.c, section: req.params.s }));
 });
 
-app.delete('/api/students/:id', async (req, res) => {
-    await Student.findByIdAndDelete(req.params.id);
-    res.json({ success: true });
-});
-
-app.get('*', (req, res) => res.sendFile(path.join(__dirname, 'public', 'index.html')));
 app.listen(process.env.PORT || 3000);

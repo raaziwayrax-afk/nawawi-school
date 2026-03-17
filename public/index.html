@@ -2,163 +2,135 @@
 <html lang="so">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nawawi School System | NBS</title>
+    <title>Nawawi Pro | Official Global System</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        :root { --primary: #0f172a; --blue: #3b82f6; --red: #e11d48; --green: #10b981; --bg: #f8fafc; }
-        body { font-family: 'Inter', sans-serif; margin: 0; background: var(--bg); }
-        .sidebar { width: 260px; height: 100vh; background: var(--primary); color: white; position: fixed; padding: 25px; }
-        .main { margin-left: 280px; padding: 40px; }
-        .card { background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); margin-bottom: 25px; }
-        .flex-header { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; }
-        input, select, button { padding: 12px; border-radius: 8px; border: 1px solid #e2e8f0; margin: 5px 0; font-size: 14px; }
-        button { background: var(--blue); color: white; border: none; cursor: pointer; font-weight: 600; }
-        .btn-add { background: var(--green); margin-left: auto; }
-        .btn-del { background: var(--red); padding: 5px 12px; font-size: 12px; }
-        table { width: 100%; border-collapse: collapse; background: white; margin-top: 20px; border-radius: 10px; overflow: hidden; }
-        th, td { padding: 15px; text-align: left; border-bottom: 1px solid #f1f5f9; }
-        .att-btn { font-size: 20px; background: none; color: #333; padding: 5px; border: 1px solid #eee; width: 40px; cursor: pointer; }
-        .active-v { color: var(--green); } .active-x { color: var(--red); }
-        #loginArea { max-width: 400px; margin: 100px auto; text-align: center; }
-        .grid-portal { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; }
+        :root { --primary: #0f172a; --accent: #2563eb; --red: #ef4444; --green: #22c55e; --bg: #f1f5f9; }
+        body { font-family: 'Segoe UI', sans-serif; margin: 0; background: var(--bg); display: flex; }
+        
+        /* Login UI */
+        #loginOverlay { position: fixed; inset: 0; background: var(--bg); display: flex; align-items: center; justify-content: center; z-index: 1000; }
+        .login-card { background: white; padding: 40px; border-radius: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); width: 350px; text-align: center; }
+        
+        /* Sidebar */
+        .sidebar { width: 260px; background: var(--primary); color: white; height: 100vh; position: fixed; padding: 20px; transition: 0.3s; }
+        .sidebar button { width: 100%; padding: 15px; background: transparent; color: #cbd5e1; border: none; text-align: left; font-size: 16px; cursor: pointer; border-radius: 8px; margin-bottom: 5px; }
+        .sidebar button:hover, .sidebar button.active { background: var(--accent); color: white; }
+        
+        /* Main Area */
+        .main { flex: 1; margin-left: 280px; padding: 40px; }
+        .card { background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); margin-bottom: 25px; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; }
+        
+        /* Tables & Inputs */
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #e2e8f0; }
+        input, select { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; margin-top: 10px; }
+        .btn-primary { background: var(--accent); color: white; border: none; padding: 12px 25px; border-radius: 8px; cursor: pointer; font-weight: bold; }
     </style>
 </head>
 <body>
 
-<div id="loginArea" class="card">
-    <h2 style="color: var(--primary)">NAWAWI NBS PORTAL</h2>
-    <select id="userRole" onchange="toggleLogin()">
-        <option value="student">Student Portal</option>
-        <option value="admin">Admin Portal</option>
-    </select>
-    <div id="stFields"><input type="text" id="nbsIn" placeholder="NBS Code"></div>
-    <div id="adFields" style="display:none"><input type="text" id="u" placeholder="Admin User"><input type="password" id="p" placeholder="Password"></div>
-    <button onclick="login()" style="width:100%">Giri Portal-ka</button>
+<div id="loginOverlay">
+    <div class="login-card">
+        <h2 style="color:var(--primary)">NAWAWI PRO</h2>
+        <select id="role"><option value="student">Student Portal</option><option value="admin">Admin Portal</option></select>
+        <input type="text" id="loginId" placeholder="NBS Code / Admin User">
+        <input type="password" id="loginPass" placeholder="Password (123456)">
+        <button class="btn-primary" onclick="auth()" style="width:100%; margin-top:20px;">Giri Portal-ka</button>
+    </div>
 </div>
 
-<div id="dashArea" style="display:none">
-    <div class="sidebar">
-        <h3>NAWAWI PRO</h3>
-        <div id="sidebarMenu"></div>
-        <button onclick="location.reload()" style="background:var(--red); width:100%; margin-top:50px;">Logout</button>
-    </div>
-    <div class="main" id="mainView"></div>
+<div id="sidebar" class="sidebar" style="display:none">
+    <h2 style="text-align:center">NBS PRO</h2>
+    <hr style="opacity: 0.1; margin-bottom: 20px;">
+    <div id="menuItems"></div>
+    <button onclick="location.reload()" style="color:var(--red); margin-top: auto;"><i class="fas fa-sign-out-alt"></i> Logout</button>
+</div>
+
+<div id="main" class="main" style="display:none">
+    <div id="viewContainer"></div>
 </div>
 
 <script>
-    let activeStudent = null;
+    let user = null;
 
-    function toggleLogin() {
-        const r = document.getElementById('userRole').value;
-        document.getElementById('stFields').style.display = r === 'student' ? 'block' : 'none';
-        document.getElementById('adFields').style.display = r === 'admin' ? 'block' : 'none';
-    }
-
-    async function login() {
-        const r = document.getElementById('userRole').value;
-        if(r === 'admin') {
-            const res = await fetch('/api/admin/login', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({username: u.value, password: p.value})
-            });
-            if(res.ok) setupAdmin(); else alert("Xogtu waa khalad!");
-        } else {
-            const res = await fetch('/api/student/login', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({nbsCode: nbsIn.value})
-            });
-            const data = await res.json();
-            if(data.success) { activeStudent = data.data; setupStudent(); } else alert("NBS Code-ka lama helin!");
-        }
-    }
-
-    // --- ADMIN ---
-    function setupAdmin() {
-        document.getElementById('loginArea').style.display = 'none';
-        document.getElementById('dashArea').style.display = 'block';
-        document.getElementById('sidebarMenu').innerHTML = `<button onclick="showClasses()" style="width:100%">Manage Classes</button>`;
-        showClasses();
-    }
-
-    function showClasses() {
-        document.getElementById('mainView').innerHTML = `
-            <div class="card">
-                <div class="flex-header">
-                    <select id="c"><option value="9">9aad</option><option value="10">10aad</option><option value="11">11aad</option><option value="12">12aad</option></select>
-                    <select id="s"><option value="A">Sec A</option><option value="B">Sec B</option><option value="C">Sec C</option><option value="D">Sec D</option></select>
-                    <input type="text" id="srch" placeholder="Search Magaca..." onkeyup="doSearch()">
-                    <button onclick="loadList()">Load List</button>
-                    <button class="btn-add" onclick="showAdd()">+ Add Student</button>
-                </div>
-            </div>
-            <div id="listDiv"></div>
-        `;
-    }
-
-    async function loadList() {
-        const res = await fetch(`/api/students/${c.value}/${s.value}`);
-        const data = await res.json();
-        const isKhamiis = new Date().getDay() === 4;
-
-        let h = `<table><tr><th>NBS ID</th><th>Full Name</th><th>Attendance (Pre/Post)</th><th>Actions</th></tr>`;
-        data.forEach(st => {
-            h += `<tr class="st-row">
-                <td>${st.nbsCode}</td>
-                <td class="st-name">${st.fullName}</td>
-                <td>
-                    <button class="att-btn">✓</button>
-                    ${!isKhamiis ? `<button class="att-btn">✓</button>` : '<em>Khamiis (Hal)</em>'}
-                </td>
-                <td><button class="btn-del" onclick="delSt('${st._id}')">Delete</button></td>
-            </tr>`;
-        });
-        document.getElementById('listDiv').innerHTML = h + `</table>`;
-    }
-
-    function showAdd() {
-        document.getElementById('mainView').innerHTML += `
-            <div class="card">
-                <h3>Add New Student</h3>
-                <input type="text" id="fNBS" placeholder="NBS Code">
-                <input type="text" id="fName" placeholder="Magaca oo saddexan">
-                <input type="text" id="fMom" placeholder="Magaca hooyada">
-                <button onclick="saveSt()" style="width:100%">Save Student</button>
-            </div>
-        `;
-    }
-
-    async function saveSt() {
-        await fetch('/api/students', {
+    async function auth() {
+        const res = await fetch('/api/login', {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({nbsCode: fNBS.value, fullName: fName.value, motherName: fMom.value, class: c.value, section: s.value})
+            body: JSON.stringify({role: role.value, id: loginId.value, pass: loginPass.value})
         });
-        alert("Waa la keydiyey!"); loadList();
+        const data = await res.json();
+        if(data.success) {
+            user = data;
+            document.getElementById('loginOverlay').style.display = 'none';
+            document.getElementById('sidebar').style.display = 'block';
+            document.getElementById('main').style.display = 'block';
+            data.role === 'admin' ? loadAdmin() : loadStudent();
+        } else alert("Xogtu waa khalad!");
     }
 
-    function doSearch() {
-        let val = srch.value.toLowerCase();
-        document.querySelectorAll('.st-row').forEach(r => {
-            r.style.display = r.querySelector('.st-name').innerText.toLowerCase().includes(val) ? '' : 'none';
-        });
+    // --- Admin Module ---
+    function loadAdmin() {
+        document.getElementById('menuItems').innerHTML = `
+            <button onclick="adminDashboard()"><i class="fas fa-th-large"></i> Manage Classes</button>
+            <button onclick="addStudentForm()"><i class="fas fa-user-plus"></i> Add Student</button>
+        `;
+        adminDashboard();
     }
 
-    // --- STUDENT ---
-    function setupStudent() {
-        document.getElementById('loginArea').style.display = 'none';
-        document.getElementById('dashArea').style.display = 'block';
-        const st = activeStudent;
-        document.getElementById('mainView').innerHTML = `
-            <div class="card"><h1>Ku soo dhowaw, ${st.fullName}</h1><p>NBS ID: ${st.nbsCode}</p></div>
-            <div class="grid-portal">
-                <div class="card"><h3>Exam Result</h3><p>Grade: ${st.exam.grade} | Avg: ${st.exam.average}%</p></div>
-                <div class="card"><h3>Fee Status</h3><p>Paid: $${st.fees.paid}</p></div>
-                <div class="card"><h3>Xogta kale</h3><p>Hooyada: ${st.motherName}</p></div>
+    function adminDashboard() {
+        const container = document.getElementById('viewContainer');
+        container.innerHTML = `
+            <div class="card">
+                <h3>Select Class & Section</h3>
+                <div class="grid">
+                    <select id="selC"><option value="9">Class 9</option><option value="12">Class 12</option></select>
+                    <select id="selS"><option value="A">Section A</option><option value="B">Section B</option><option value="C">Section C</option><option value="D">Section D</option></select>
+                    <button class="btn-primary" onclick="fetchClass()">Load List</button>
+                </div>
+            </div>
+            <div id="adminList"></div>
+        `;
+    }
+
+    async function fetchClass() {
+        const res = await fetch(`/api/students/${selC.value}/${selS.value}`);
+        const list = await res.json();
+        let html = `<table><tr><th>ID</th><th>Name</th><th>Action</th></tr>`;
+        list.forEach(s => {
+            html += `<tr><td>${s.nbsCode}</td><td>${s.fullName}</td><td><button onclick='editSt(${JSON.stringify(s)})'>Edit</button></td></tr>`;
+        });
+        document.getElementById('adminList').innerHTML = html + `</table>`;
+    }
+
+    // --- Student Module ---
+    function loadStudent() {
+        const s = user.data;
+        document.getElementById('menuItems').innerHTML = `
+            <button onclick="stDash()"><i class="fas fa-home"></i> Dashboard (100%)</button>
+            <button onclick="stAttendance()"><i class="fas fa-calendar-check"></i> Attendance</button>
+            <button onclick="stFees()"><i class="fas fa-dollar-sign"></i> Fee Status</button>
+            <button onclick="stExams()"><i class="fas fa-file-invoice"></i> Exam Results</button>
+        `;
+        stDash();
+    }
+
+    function stDash() {
+        const s = user.data;
+        document.getElementById('viewContainer').innerHTML = `
+            <div class="card"><h1>Ku soo dhowaw, ${s.fullName}</h1><p>ID: ${s.nbsCode} | Class: ${s.class}${s.section}</p></div>
+            <div class="grid">
+                <div class="card" style="border-left:5px solid var(--green)"><h3>Attendance</h3><p>100% Active</p></div>
+                <div class="card" style="border-left:5px solid var(--accent)"><h3>Fees</h3><p>$${s.fees.paid} Paid</p></div>
+                <div class="card" style="border-left:5px solid orange"><h3>Exam Avg</h3><p>${s.exam.average || 0}%</p></div>
             </div>
         `;
+    }
+
+    function stAttendance() {
+        document.getElementById('viewContainer').innerHTML = `<div class="card"><h3>Attendance History</h3><p>Bisha iyo Maalinta la qalday halkan bay ku soo muuqanayaan.</p></div>`;
     }
 </script>
 </body>

@@ -197,3 +197,4 @@ const st = {
   backBtn: { padding:'8px 15px', background:'#eee', border:'none', borderRadius:'5px', cursor:'pointer' },
   del: { color:'red', border:'none', background:'none', cursor:'pointer', marginLeft:'10px' }
 };
+

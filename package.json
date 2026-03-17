@@ -1,7 +1,7 @@
 {
-  "name": "nawawi-school-v3",
-  "version": "1.3.0",
-  "description": "Nawawi School Management System - Admin & Student Portal",
+  "name": "nawawi-nbs-system-v4",
+  "version": "4.0.0",
+  "description": "Nawawi School Management System - Professional NBS Portal",
   "main": "index.js",
   "scripts": {
     "start": "node index.js"

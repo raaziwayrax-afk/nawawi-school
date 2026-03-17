@@ -8,13 +8,13 @@ app.use(cors());
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Database Connection
-const uri = "mongodb+srv://raaziwayrax_db_user:raasi1234@cluster0.cvcctca.mongodb.net/NawawiDB?retryWrites=true&w=majority";
-mongoose.connect(uri)
-    .then(() => console.log("✅ NBS Database Connected Successfully"))
-    .catch(err => console.error("❌ Database Connection Error:", err));
+// Isku xidhka Database-ka (Hubi in xogtaadu sax tahay)
+const mongoURI = "mongodb+srv://raaziwayrax_db_user:raasi1234@cluster0.cvcctca.mongodb.net/NawawiDB?retryWrites=true&w=majority";
+mongoose.connect(mongoURI)
+    .then(() => console.log("✅ NBS Database Connected: Ready for All Classes"))
+    .catch(err => console.error("❌ Database Error:", err));
 
-// Student Schema - Dhamaan Fields-ka waan ku daray
+// Student Schema - Wax kasta oo ardayga khuseeya
 const StudentSchema = new mongoose.Schema({
     nbsCode: { type: String, unique: true, required: true },
     password: { type: String, default: "123456" },
@@ -22,27 +22,19 @@ const StudentSchema = new mongoose.Schema({
     motherName: String,
     parentPhone1: String,
     parentPhone2: String,
-    class: String,
-    section: String,
+    class: { type: String, required: true }, // 9, 10, 11, 12
+    section: { type: String, default: "A" }, // A, B, C
     fees: { 
         paid: { type: Number, default: 0 }, 
         total: { type: Number, default: 1200 } 
     },
-    attendance: [{ date: String, status: String }],
+    attendance: [{ 
+        date: { type: String }, 
+        status: { type: String } 
+    }],
     exam: {
         subjects: [
-            { name: { type: String, default: "Math" }, score: { type: Number, default: 0 } },
-            { name: { type: String, default: "English" }, score: { type: Number, default: 0 } },
-            { name: { type: String, default: "Arabic" }, score: { type: Number, default: 0 } },
-            { name: { type: String, default: "Islamic" }, score: { type: Number, default: 0 } },
-            { name: { type: String, default: "Physics" }, score: { type: Number, default: 0 } },
-            { name: { type: String, default: "Chemistry" }, score: { type: Number, default: 0 } },
-            { name: { type: String, default: "Biology" }, score: { type: Number, default: 0 } },
-            { name: { type: String, default: "History" }, score: { type: Number, default: 0 } },
-            { name: { type: String, default: "Geography" }, score: { type: Number, default: 0 } },
-            { name: { type: String, default: "Somali" }, score: { type: Number, default: 0 } },
-            { name: { type: String, default: "ICT" }, score: { type: Number, default: 0 } },
-            { name: { type: String, default: "Business" }, score: { type: Number, default: 0 } }
+            { name: String, score: { type: Number, default: 0 } }
         ],
         average: { type: Number, default: 0 }
     }
@@ -50,57 +42,64 @@ const StudentSchema = new mongoose.Schema({
 
 const Student = mongoose.model('Student', StudentSchema);
 
-// Admin & Student Login
+// Admin & Student Login Logic
 app.post('/api/login', async (req, res) => {
-    const { role, id, pass } = req.body;
-    if (role === 'admin' && id === 'nawawi_admin' && pass === '7209379') {
-        return res.json({ success: true, role: 'admin' });
-    }
-    const s = await Student.findOne({ nbsCode: id, password: pass });
-    if (s) {
-        res.json({ success: true, role: 'student', data: s });
-    } else {
-        res.status(401).json({ success: false, message: "Invalid credentials" });
+    try {
+        const { role, id, pass } = req.body;
+        if (role === 'admin' && id === 'nawawi_admin' && pass === '7209379') {
+            return res.json({ success: true, role: 'admin' });
+        }
+        const s = await Student.findOne({ nbsCode: id, password: pass });
+        if (s) {
+            res.json({ success: true, role: 'student', data: s });
+        } else {
+            res.status(401).json({ success: false, message: "Invalid ID or Password" });
+        }
+    } catch (err) {
+        res.status(500).json({ success: false });
     }
 });
 
-// Admin Save/Update (Dhamaan functions halkan bay soo maraan)
+// Admin Power: Save, Update, Edit Subjects, Attendance & Fees
 app.post('/api/admin/save', async (req, res) => {
     try {
         const { nbsCode, ...updateData } = req.body;
-        // Upsert: true waxay ka dhigaysaa hadii uu jiro inuu Update gareeyo, hadii kalena uu Abuuro
-        const s = await Student.findOneAndUpdate(
+        
+        // Logic-gan wuxuu hubinayaa haddii ardaygu jiro inuu Edit gareeyo, hadii kalena uu Abuuro (Upsert)
+        const updatedStudent = await Student.findOneAndUpdate(
             { nbsCode: nbsCode }, 
             { $set: updateData }, 
-            { upsert: true, new: true }
+            { upsert: true, new: true, setDefaultsOnInsert: true }
         );
-        res.json({ success: true, data: s });
+        
+        res.json({ success: true, data: updatedStudent });
     } catch (err) {
+        console.error("Save Error:", err);
         res.status(500).json({ success: false, error: err.message });
     }
 });
 
-// Load Class List
-app.get('/api/students/:c/:s', async (req, res) => {
+// Soo qaadista liiska fasallada (9, 10, 11, 12)
+app.get('/api/students/:class/:section', async (req, res) => {
     try {
-        const list = await Student.find({ class: req.params.c, section: req.params.s });
-        res.json(list);
+        const query = { class: req.params.class, section: req.params.section };
+        const students = await Student.find(query).sort({ fullName: 1 });
+        res.json(students);
     } catch (err) {
         res.status(500).json([]);
     }
 });
 
-// Single Student Detail
+// Xogta hal arday oo kaliya (Edit-ka loo isticmaalo)
 app.get('/api/student/:id', async (req, res) => {
-    const s = await Student.findOne({ nbsCode: req.params.id });
-    res.json(s);
+    try {
+        const s = await Student.findOne({ nbsCode: req.params.id });
+        res.json(s);
+    } catch (err) {
+        res.status(404).json(null);
+    }
 });
 
-// Delete Student
-app.delete('/api/admin/delete/:id', async (req, res) => {
-    await Student.findOneAndDelete({ nbsCode: req.params.id });
-    res.json({ success: true });
-});
-
+// PORT-ka Server-ka
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`🚀 NBS Server running on port ${PORT}`));
+app.listen(PORT, () => console.log(`🚀 NBS System running on http://localhost:${PORT}`));

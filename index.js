@@ -8,12 +8,12 @@ app.use(cors());
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
-// HUBI: In xogtani ay tahay midda saxda ah ee MongoDB-gaaga
+// DATABASE CONNECTION
 const mongoURI = "mongodb+srv://raaziwayrax_db_user:raasi1234@cluster0.cvcctca.mongodb.net/NawawiDB?retryWrites=true&w=majority";
 
 mongoose.connect(mongoURI)
-    .then(() => console.log("✅ DATABASE-KU WAA LIVE"))
-    .catch(err => console.error("❌ DATABASE-KU WAA DIIDAN YAHAY:", err));
+    .then(() => console.log("✅ MongoDB is Connected Successfully"))
+    .catch(err => console.error("❌ MongoDB Connection Failed:", err));
 
 const StudentSchema = new mongoose.Schema({
     nbsCode: { type: String, unique: true, required: true },
@@ -35,23 +35,20 @@ const Student = mongoose.model('Student', StudentSchema);
 app.post('/api/login', async (req, res) => {
     const { role, id, pass } = req.body;
     if (role === 'admin' && id === 'nawawi_admin' && pass === '7209379') return res.json({ success: true, role: 'admin' });
-    const s = await Student.findOne({ nbsCode: id, password: pass }).lean();
+    const s = await Student.findOne({ nbsCode: id, password: pass });
     if (s) res.json({ success: true, role: 'student', data: s });
     else res.status(401).json({ success: false });
 });
 
-// Soo saarista Liiska (Halkan ayaa ah halka sawirkaaga ka muuqata)
+// GET STUDENTS - Tan ayaa keenaysa in ardaydu soo muuqdaan
 app.get('/api/students/:c/:s', async (req, res) => {
     try {
-        // Waxaan ka raadinaynaa Database-ka fasalka iyo qaybta uu doortay
         const list = await Student.find({ class: req.params.c, section: req.params.s }).sort({fullName: 1});
         res.json(list);
-    } catch (err) {
-        res.status(500).json([]);
-    }
+    } catch (err) { res.status(500).json([]); }
 });
 
-// Keydinta Ardayga (Waa inaad tan isticmaashaa marka hore)
+// SAVE DATA - Tan ayaa xallinaysa in "Options-ka" ay wax keydiyaan
 app.post('/api/admin/save', async (req, res) => {
     try {
         const { nbsCode, attendance, exam, fees, ...rest } = req.body;
@@ -59,13 +56,10 @@ app.post('/api/admin/save', async (req, res) => {
         if (attendance) update.$push = { attendance: attendance[0] };
         if (exam) update.$set.exam = exam;
         if (fees) update.$set.fees = fees;
-
-        await Student.findOneAndUpdate({ nbsCode }, update, { upsert: true, new: true });
+        await Student.findOneAndUpdate({ nbsCode }, update, { upsert: true });
         res.json({ success: true });
-    } catch (err) {
-        res.status(500).json({ success: false });
-    }
+    } catch (err) { res.status(500).json({ success: false }); }
 });
 
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, '0.0.0.0', () => console.log(`🚀 System Online on Port ${PORT}`));
+app.listen(PORT, '0.0.0.0', () => console.log(`🚀 Server running on port ${PORT}`));

@@ -2,37 +2,53 @@
 <html lang="so">
 <head>
     <meta charset="UTF-8">
-    <title>Nawawi School</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nawawi School System</title>
     <style>
-        body { font-family: sans-serif; display: flex; justify-content: center; padding: 50px; background: #f4f4f4; }
-        .box { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
-        input { display: block; width: 100%; margin: 10px 0; padding: 10px; }
-        button { width: 100%; padding: 10px; background: #007bff; color: white; border: none; cursor: pointer; }
+        body { font-family: sans-serif; background: #f4f7f6; display: flex; flex-direction: column; align-items: center; padding: 20px; }
+        .card { background: white; padding: 25px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); width: 320px; }
+        input { width: 100%; padding: 10px; margin: 10px 0; border: 1px solid #ddd; border-radius: 5px; box-sizing: border-box; }
+        button { width: 100%; padding: 12px; background: #28a745; color: white; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; }
+        #status { margin-top: 15px; text-align: center; font-weight: bold; }
     </style>
 </head>
 <body>
-    <div class="box">
-        <h2>Diiwaangelinta Ardayda</h2>
+    <div class="card">
+        <h2 style="text-align:center; color:#333;">Nawawi School</h2>
         <form id="studentForm">
             <input type="text" id="name" placeholder="Magaca Ardayga" required>
-            <input type="text" id="class" placeholder="Fasalka" required>
-            <button type="submit">Keydi</button>
+            <input type="text" id="class" placeholder="Fasalka (e.g. Form 1)" required>
+            <button type="submit">Keydi Ardayga</button>
         </form>
-        <p id="res"></p>
+        <div id="status"></div>
     </div>
+
     <script>
         document.getElementById('studentForm').addEventListener('submit', async (e) => {
             e.preventDefault();
-            const name = document.getElementById('name').value;
-            const className = document.getElementById('class').value;
-            const res = await fetch('/api/students', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({ name, class: className })
-            });
-            if(res.ok) {
-                document.getElementById('res').innerText = "✅ Waa la keydiyey!";
-                document.getElementById('studentForm').reset();
+            const status = document.getElementById('status');
+            const data = {
+                name: document.getElementById('name').value,
+                class: document.getElementById('class').value
+            };
+
+            status.innerText = "Gelinayaa...";
+            try {
+                const response = await fetch('/api/students', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+                if (response.ok) {
+                    status.style.color = "green";
+                    status.innerText = "✅ Ardayga waa la keydiyey!";
+                    document.getElementById('studentForm').reset();
+                } else {
+                    status.style.color = "red";
+                    status.innerText = "❌ Cilad ayaa dhacday!";
+                }
+            } catch (err) {
+                status.innerText = "❌ Xiriirka ayaa go'an!";
             }
         });
     </script>

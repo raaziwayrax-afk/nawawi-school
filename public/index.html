@@ -1,131 +1,127 @@
-<!DOCTYPE html>
+1<!DOCTYPE html>
 <html lang="so">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>NBS School Management</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        :root { --nav: #1e293b; --blue: #3b82f6; --bg: #f8fafc; }
-        body { font-family: sans-serif; margin: 0; display: flex; background: var(--bg); }
-        .sidebar { width: 260px; background: var(--nav); color: white; height: 100vh; position: fixed; padding: 20px; box-sizing: border-box; }
-        .sidebar button { width: 100%; padding: 12px; margin-bottom: 10px; border: none; background: none; color: #cbd5e1; text-align: left; cursor: pointer; border-radius: 8px; font-size: 15px; }
-        .sidebar button:hover { background: var(--blue); color: white; }
-        .main { margin-left: 260px; flex: 1; padding: 30px; }
-        .card { background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); margin-bottom: 20px; }
-        input, select { width: 100%; padding: 12px; margin-top: 10px; border: 1px solid #e2e8f0; border-radius: 8px; box-sizing: border-box; }
-        .btn-p { background: var(--blue); color: white; border: none; padding: 12px; border-radius: 8px; cursor: pointer; font-weight: bold; width: 100%; margin-top: 15px; }
+        :root { --primary: #2c3e50; --secondary: #3498db; --bg: #f4f7f6; }
+        body { font-family: 'Segoe UI', sans-serif; margin: 0; display: flex; background: var(--bg); }
+        
+        /* Sidebar Styles */
+        .sidebar { width: 250px; background: var(--primary); color: white; height: 100vh; padding: 20px; position: fixed; }
+        .sidebar h2 { border-bottom: 2px solid var(--secondary); padding-bottom: 10px; }
+        .nav-btn { width: 100%; padding: 12px; margin: 10px 0; border: none; border-radius: 5px; 
+                   background: transparent; color: white; text-align: left; cursor: pointer; transition: 0.3s; }
+        .nav-btn:hover { background: var(--secondary); }
+
+        /* Main Content */
+        .main { margin-left: 270px; padding: 30px; width: 100%; }
+        .card { background: white; padding: 25px; border-radius: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); max-width: 600px; }
+        
+        input, select { padding: 12px; margin: 10px 0; width: 100%; border: 1px solid #ddd; border-radius: 5px; box-sizing: border-box; }
+        .save-btn { background: var(--secondary); color: white; border: none; padding: 15px; width: 100%; border-radius: 5px; cursor: pointer; font-weight: bold; }
+        
         table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-        th, td { padding: 12px; border-bottom: 1px solid #f1f5f9; text-align: left; }
+        th, td { border: 1px solid #ddd; padding: 12px; text-align: left; }
+        th { background-color: #f2f2f2; }
     </style>
 </head>
 <body>
 
-<div id="loginOverlay" style="position:fixed; inset:0; background:var(--bg); z-index:999; display:flex; align-items:center; justify-content:center;">
-    <div class="card" style="width:350px; text-align:center;">
-        <h2>NBS LOGIN</h2>
-        <input id="uID" placeholder="Admin ID">
-        <input id="uPass" type="password" placeholder="Password">
-        <button class="btn-p" onclick="login()">Soo Gal</button>
+    <div class="sidebar">
+        <h2>NBS System</h2>
+        <button class="nav-btn" onclick="showPage('add')">➕ Add New Student</button>
+        <button class="nav-btn" onclick="showPage('attendance')">📝 Attendance</button>
+        <button class="nav-btn" onclick="showPage('exam')">📊 Exam Results</button>
     </div>
-</div>
 
-<div class="sidebar">
-    <h2>NAWAWI PRO</h2>
-    <button onclick="nav('attendance')"><i class="fas fa-check"></i> Attendance (Sax/Khlad)</button>
-    <button onclick="nav('exam')"><i class="fas fa-file-invoice"></i> 12 Maado (Exams)</button>
-    <button onclick="nav('fee')"><i class="fas fa-wallet"></i> Fee Management</button>
-    <button onclick="nav('add')"><i class="fas fa-user-plus"></i> Add New Student</button>
-</div>
+    <div class="main" id="app">
+        <div class="card">
+            <h1>Ku soo dhowaw NBS</h1>
+            <p>Fadlan menu-ka dhinaca bidix ka dooro qaybta aad rabto.</p>
+        </div>
+    </div>
 
-<div class="main" id="app"></div>
-
-<script>
-    const subjs = ["Math", "English", "Arabic", "Islamic", "Physics", "Chemistry", "Biology", "History", "Geography", "Somali", "ICT", "Business"];
-
-    function login() {
-        if(uID.value === 'nawawi_admin' && uPass.value === '7209379') {
-            document.getElementById('loginOverlay').style.display = 'none';
-            nav('attendance');
-        } else alert("Khlad!");
-    }
-
-    function nav(page) {
-        let html = `<div class="card"><h3>${page.toUpperCase()} PANEL</h3>`;
-        if(page === 'add') {
-            html += `<input id="nID" placeholder="NBS Code">
-                     <input id="nName" placeholder="Full Name">
-                     <select id="nCl"><option value="9aad">9aad</option><option value="12aad">12aad</option></select>
-                     <select id="nSc"><option value="A">A</option><option value="B">B</option></select>
-                     <button class="btn-p" onclick="saveNew()">Diiwaangeli</button>`;
-        } else {
-            html += `<div style="display:flex; gap:10px">
-                        <select id="fC"><option value="9aad">9aad</option><option value="12aad">12aad</option></select>
-                        <select id="fS"><option value="A">A</option><option value="B">B</option></select>
-                        <button class="btn-p" style="margin:0; width:150px" onclick="loadList('${page}')">Fetch Students</button>
-                     </div>`;
-        }
-        document.getElementById('app').innerHTML = html + `</div><div id="listArea"></div>`;
-    }
-
-    async function saveNew() {
-        await fetch('/api/admin/save', {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({ nbsCode: nID.value, fullName: nName.value, class: nCl.value, section: nSc.value })
-        });
-        alert("Ardayga waa la keydiyey!");
-        nav('attendance');
-    }
-
-    async function loadList(type) {
-        const res = await fetch(`/api/students/${fC.value}/${fS.value}`);
-        const students = await res.json();
-        const area = document.getElementById('listArea');
-        if(students.length === 0) {
-            area.innerHTML = `<div class="card" style="color:red">Arday lama helin fasalkan!</div>`;
-            return;
-        }
-        let table = `<div class="card"><table><tr><th>Magaca</th><th>Action</th></tr>`;
-        students.forEach(s => {
-            table += `<tr><td>${s.fullName}</td><td>`;
-            if(type === 'attendance') {
-                table += `<button onclick="quickSave('${s.nbsCode}','P')">Sax ✅</button> <button onclick="quickSave('${s.nbsCode}','A')">Khlad ❌</button>`;
-            } else if(type === 'exam') {
-                table += `<button class="btn-p" style="margin:0; width:auto" onclick="openExam('${s.nbsCode}')">Geli Dhibcaha</button>`;
+    <script>
+        // 1. Shaqada lagu kala beddelayo boggaga
+        function showPage(page) {
+            let content = '';
+            if (page === 'add') {
+                content = `
+                <div class="card">
+                    <h2>Diiwaangeli Arday Cusub</h2>
+                    <input type="text" id="nbsCode" placeholder="Geli ID (tusaale: 101)">
+                    <input type="text" id="fullName" placeholder="Magaca oo dhammaystiran">
+                    <select id="class"><option value="9aad">9aad</option><option value="12aad">12aad</option></select>
+                    <select id="section"><option value="A">A</option><option value="B">B</option></select>
+                    <button class="save-btn" onclick="saveData()">💾 Diiwaangeli</button>
+                </div>`;
             } else {
-                table += `Paid: $${s.fees.paid} | <button onclick="quickSave('${s.nbsCode}','fee')">Update Fee</button>`;
+                content = `
+                <div class="card">
+                    <h2>Qaybta ${page.toUpperCase()}</h2>
+                    <select id="fClass"><option value="9aad">9aad</option><option value="12aad">12aad</option></select>
+                    <select id="fSection"><option value="A">A</option><option value="B">B</option></select>
+                    <button class="save-btn" onclick="fetchStudents()">🔍 Show Students</button>
+                    <div id="listArea"></div>
+                </div>`;
             }
-            table += `</td></tr>`;
-        });
-        area.innerHTML = table + `</table></div>`;
-    }
+            document.getElementById('app').innerHTML = content;
+        }
 
-    async function quickSave(id, val) {
-        let payload = { nbsCode: id };
-        if(val === 'P' || val === 'A') payload.attendance = [{ date: new Date().toLocaleDateString(), status: val }];
-        if(val === 'fee') payload.fees = { paid: Number(prompt("Geli lacagta:")) };
-        await fetch('/api/admin/save', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(payload) });
-        alert("Success!");
-    }
+        // 2. Shaqada Xogta loogu dirayo Backend-ka (SAVE)
+        async function saveData() {
+            const studentData = {
+                nbsCode: document.getElementById('nbsCode').value,
+                fullName: document.getElementById('fullName').value,
+                class: document.getElementById('class').value,
+                section: document.getElementById('section').value
+            };
 
-    function openExam(id) {
-        let html = `<div class="card"><h3>12 Subjects Marks</h3><div style="display:grid; grid-template-columns:1fr 1fr; gap:10px">`;
-        subjs.forEach((m, i) => html += `<div>${m}: <input id="m-${i}" type="number" value="0"></div>`);
-        html += `</div><button class="btn-p" onclick="saveExam('${id}')">Save All & Avg</button></div>`;
-        document.getElementById('listArea').innerHTML = html;
-    }
+            if(!studentData.nbsCode || !studentData.fullName) return alert("Fadlan buuxi meelaha bannaan!");
 
-    async function saveExam(id) {
-        let marks = subjs.map((n, i) => ({ name: n, score: Number(document.getElementById(`m-${i}`).value) }));
-        let avg = (marks.reduce((a, b) => a + b.score, 0) / 12).toFixed(2);
-        await fetch('/api/admin/save', { 
-            method: 'POST', 
-            headers: {'Content-Type': 'application/json'}, 
-            body: JSON.stringify({ nbsCode: id, exam: { subjects: marks, average: avg } }) 
-        });
-        alert("Dhibcaha waa la keydiyey! Average: " + avg + "%");
-        nav('exam');
-    }
-</script>
+            try {
+                const response = await fetch('/api/admin/save', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(studentData)
+                });
+                const result = await response.json();
+                if(result.success) {
+                    alert("✅ Ardayga waa la keydiyey!");
+                    document.getElementById('nbsCode').value = '';
+                    document.getElementById('fullName').value = '';
+                }
+            } catch (err) { alert("❌ Cilad ayaa ka dhacday keydinta!"); }
+        }
+
+        // 3. Shaqada Xogta looga soo qaadayo Backend-ka (FETCH)
+        async function fetchStudents() {
+            const cls = document.getElementById('fClass').value;
+            const sec = document.getElementById('fSection').value;
+            const listArea = document.getElementById('listArea');
+
+            listArea.innerHTML = "Raadinaya...";
+
+            try {
+                const response = await fetch(`/api/students/${cls}/${sec}`);
+                const students = await response.json();
+
+                if (students.length === 0) {
+                    listArea.innerHTML = "<p style='color:red; margin-top:20px;'>❌ Arday lama helin fasalkan!</p>";
+                    return;
+                }
+
+                let table = `<table><tr><th>Magaca</th><th>ID (Code)</th></tr>`;
+                students.forEach(s => {
+                    table += `<tr><td>${s.fullName}</td><td>${s.nbsCode}</td></tr>`;
+                });
+                table += `</table>`;
+                listArea.innerHTML = table;
+
+            } catch (err) { listArea.innerHTML = "Cilad ayaa dhacday!"; }
+        }
+    </script>
 </body>
 </html>

@@ -31,8 +31,8 @@ const StudentSchema = new mongoose.Schema({
 
 const Student = mongoose.model('Student', StudentSchema);
 
-// 3. API-YADA
-// Soo saarista ardayda (Fetch)
+// 3. API-YADA (MUHIIM)
+// Helista Ardayda (Fetch)
 app.get('/api/students/:c/:s', async (req, res) => {
     try {
         const list = await Student.find({ class: req.params.c, section: req.params.s }).sort({fullName: 1});
@@ -40,13 +40,15 @@ app.get('/api/students/:c/:s', async (req, res) => {
     } catch (err) { res.status(500).json([]); }
 });
 
-// Keydinta xogta (Save)
+// Keydinta Ardayda (Save)
 app.post('/api/admin/save', async (req, res) => {
     try {
         const { nbsCode, ...data } = req.body;
-        await Student.findOneAndUpdate({ nbsCode }, data, { upsert: true, new: true });
-        res.json({ success: true });
+        // upsert: true waxay ka dhigaysaa haddii ardaygu jiro inuu update sameeyo, haddii kalena uu abuuro
+        const result = await Student.findOneAndUpdate({ nbsCode }, data, { upsert: true, new: true });
+        res.json({ success: true, data: result });
     } catch (err) {
+        console.error("Save Error:", err);
         res.status(500).json({ success: false });
     }
 });
@@ -54,5 +56,5 @@ app.post('/api/admin/save', async (req, res) => {
 // 4. KICINTA SERVER-KA
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, '0.0.0.0', () => {
-    console.log(`🚀 Server is running on port ${PORT}`);
+    console.log(`🚀 NAWAWI SERVER IS RUNNING ON PORT ${PORT}`);
 });

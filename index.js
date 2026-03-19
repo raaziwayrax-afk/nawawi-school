@@ -10,8 +10,9 @@ app.use(cors());
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
-// --- ISKU-XIRKA MONGO DB ---
-const mongoURI = "mongodb+srv://raazicadar_db_user:inicadar7209379.@cluster0.z93llyc.mongodb.net/NawawiDB?retryWrites=true&w=majority";
+// --- ISKU-XIRKA MONGO DB (Habeysan) ---
+// Waxaan isticmaaleynaa MONGO_URI-ga Render ama password-kaagii cusub
+const mongoURI = process.env.MONGO_URI || "mongodb+srv://raazicadar_db_user:inicadar1234.@cluster0.z93llyc.mongodb.net/NawawiDB?retryWrites=true&w=majority&appName=Cluster0";
 
 mongoose.connect(mongoURI)
     .then(() => console.log("✅ Xiriirka NawawiDB waa guul!"))
@@ -60,5 +61,11 @@ app.get('/api/students/:class/:section', async (req, res) => {
     }
 });
 
-const PORT = 3001;
-app.listen(PORT, () => console.log(`🚀 Server wuxuu ka shaqaynayaa: http://localhost:${PORT}`));
+// 3. Root Route (Si loo hubiyo inuu Live yahay)
+app.get('/', (req, res) => {
+    res.send("Nawawi School System Server is Live!");
+});
+
+// PORT-ka Render uu u baahan yahay
+const PORT = process.env.PORT || 3001;
+app.listen(PORT, () => console.log(`🚀 Server wuxuu ka shaqaynayaa Port: ${PORT}`));

@@ -1,14 +1,32 @@
 {
   "name": "nawawi-school-system",
   "version": "1.0.0",
+  "description": "Nidaamka Maamulka Dugsiga Nawawi",
   "main": "index.js",
   "scripts": {
-    "start": "node index.js"
+    "start": "node index.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
   },
+  "keywords": [
+    "school",
+    "management",
+    "nawawi"
+  ],
+  "author": "Raazi Cadar",
+  "license": "ISC",
   "dependencies": {
-    "express": "^4.18.2",
-    "mongoose": "^7.0.0",
-    "cors": "^2.8.5",
+    "cors": "^2.8.6",
+    "express": "^4.22.1",
+    "mongoose": "^7.8.9",
     "path": "^0.12.7"
-  }
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/raaziwayrax-afk/nawawi-school.git"
+  },
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/raaziwayrax-afk/nawawi-school/issues"
+  },
+  "homepage": "https://github.com/raaziwayrax-afk/nawawi-school#readme"
 }

@@ -2,202 +2,71 @@
 <html lang="so">
 <head>
     <meta charset="UTF-8">
-    <title>NBS School Management</title>
+    <title>Nawawi School System</title>
     <style>
-        :root { --p: #2c3e50; --s: #3498db; --w: #ffffff; --r: #e74c3c; --g: #2ecc71; }
-        body { font-family: 'Segoe UI', sans-serif; margin: 0; background: #f4f7f6; display: flex; flex-direction: column; }
-        .login-box { width: 380px; margin: 80px auto; background: var(--w); padding: 35px; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); }
-        .sidebar { width: 250px; background: var(--p); color: white; height: 100vh; position: fixed; padding: 20px; }
-        .main { margin-left: 280px; padding: 30px; }
-        .card { background: var(--w); padding: 25px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin-bottom: 20px; }
-        input, select, button { width: 100%; padding: 12px; margin: 8px 0; border-radius: 6px; border: 1px solid #ddd; box-sizing: border-box; }
-        button { background: var(--s); color: white; border: none; cursor: pointer; font-weight: bold; transition: 0.3s; }
-        button:hover { opacity: 0.8; }
-        .btn-del { background: var(--r); width: auto !important; padding: 5px 10px !important; font-size: 12px; margin-left: 5px; }
-        table { width: 100%; border-collapse: collapse; margin-top: 20px; background: white; }
-        th, td { border: 1px solid #eee; padding: 12px; text-align: left; }
-        th { background: #f8f9fa; }
-        @media print { .sidebar, button, .no-print { display: none !important; } .main { margin: 0; width: 100%; } }
+        body { font-family: Arial; background: #f4f4f4; padding: 20px; }
+        .container { max-width: 500px; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+        input, select, button { width: 100%; padding: 10px; margin: 10px 0; border: 1px solid #ccc; border-radius: 5px; }
+        button { background: #28a745; color: white; border: none; cursor: pointer; font-weight: bold; }
+        button:hover { background: #218838; }
+        h2 { color: #333; text-align: center; }
     </style>
 </head>
 <body>
 
-<div id="loginPage" class="login-box">
-    <h2 style="text-align:center;">NBS PORTAL</h2>
-    <select id="role"><option value="admin">Admin Portal</option><option value="student">Student Portal</option></select>
-    <input id="user" placeholder="NBS Code ama Username">
-    <input type="password" id="pass" placeholder="Password">
-    <button onclick="login()">GAL PORTAL-KA</button>
-</div>
+<div class="container">
+    <h2>Diiwaangelinta Ardayda</h2>
+    <input type="text" id="nbsCode" placeholder="Code-ka Ardayga (Tusaale: NBS/101)">
+    <input type="text" id="fullName" placeholder="Magaca oo Dhammaystiran">
+    
+    <select id="classSelect">
+        <option value="1">Class 1</option>
+        <option value="2">Class 2</option>
+        <option value="3">Class 3</option>
+    </select>
 
-<div id="adminPanel" style="display:none; width: 100%;">
-    <div class="sidebar">
-        <h3>NBS ADMIN</h3>
-        <button onclick="showAdmin('add')">➕ Add Student</button>
-        <button onclick="showAdmin('att')">📝 Attendance</button>
-        <button onclick="showAdmin('fees')">💰 Fees & Payment</button>
-        <button onclick="showAdmin('exam')">📊 Exam Management</button>
-        <button style="background:var(--r); margin-top:50px;" onclick="location.reload()">Logout</button>
-    </div>
-    <div class="main" id="adminContent"></div>
-</div>
+    <select id="sectionSelect">
+        <option value="A">Section A</option>
+        <option value="B">Section B</option>
+    </select>
 
-<div id="studentPanel" style="display:none; width: 100%;">
-    <div class="sidebar" style="background:#34495e;">
-        <h3>STUDENT PORTAL</h3>
-        <button onclick="stdDash()">📊 My Dashboard</button>
-        <button onclick="stdExams()">📝 My Results</button>
-        <button style="background:var(--r); margin-top:50px;" onclick="location.reload()">Logout</button>
-    </div>
-    <div class="main" id="stdContent"></div>
+    <input type="number" id="paidAmount" placeholder="Lacagta uu bixiyey ($)">
+    
+    <button onclick="saveStudent()">Keydi Ardayga</button>
 </div>
 
 <script>
-    let activeUser = null;
+    async function saveStudent() {
+        const data = {
+            nbsCode: document.getElementById('nbsCode').value,
+            fullName: document.getElementById('fullName').value,
+            class: document.getElementById('classSelect').value,
+            section: document.getElementById('sectionSelect').value,
+            fees: {
+                paid: Number(document.getElementById('paidAmount').value) || 0,
+                total: 1200
+            }
+        };
 
-    // --- FETCH: LOGIN ---
-    async function login() {
-        const role = document.getElementById('role').value;
-        const username = document.getElementById('user').value;
-        const password = document.getElementById('pass').value;
+        if(!data.nbsCode || !data.fullName) return alert("Fadlan buuxi meelaha banaan!");
 
         try {
-            const res = await fetch('/api/login', {
+            const response = await fetch('http://localhost:3001/api/admin/save', {
                 method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({username, password, role})
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
             });
-            const data = await res.json();
 
-            if(data.success) {
-                document.getElementById('loginPage').style.display = 'none';
-                if(data.role === 'admin') {
-                    document.getElementById('adminPanel').style.display = 'flex';
-                    showAdmin('add');
-                } else {
-                    activeUser = data.data;
-                    document.getElementById('studentPanel').style.display = 'flex';
-                    stdDash();
-                }
-            } else alert(data.message);
-        } catch (e) { alert("Cilad xiriirka server-ka!"); }
-    }
-
-    function showAdmin(page) {
-        let html = '';
-        if(page === 'add') {
-            html = `<div class="card"><h2>➕ Add Student</h2>
-                <input id="nbs" placeholder="NBS/101">
-                <input id="name" placeholder="Magaca oo Dhammaystiran">
-                <select id="cls"><option value="9">9aad</option><option value="12">12aad</option></select>
-                <select id="sec"><option value="A">A</option><option value="B">B</option></select>
-                <button onclick="saveStudent()">💾 DIIWAANGELI</button></div>`;
-        } else {
-            html = `<div class="card"><h2>${page.toUpperCase()}</h2>
-                <div style="display:flex; gap:10px;" class="no-print">
-                    <select id="fCls"><option value="9">9aad</option><option value="12">12aad</option></select>
-                    <select id="fSec"><option value="A">A</option><option value="B">B</option></select>
-                    <button onclick="fetchList('${page.toLowerCase()}')">🔍 SOO BANDHIG</button>
-                </div>
-                <div id="listArea"></div></div>`;
-        }
-        document.getElementById('adminContent').innerHTML = html;
-    }
-
-    // --- FETCH: SAVE STUDENT ---
-    async function saveStudent() {
-        const nbsCode = document.getElementById('nbs').value;
-        const fullName = document.getElementById('name').value;
-        if(!nbsCode || !fullName) return alert("Fadlan buuxi xogta!");
-
-        await fetch('/api/admin/save', { 
-            method: 'POST', 
-            headers: {'Content-Type': 'application/json'}, 
-            body: JSON.stringify({
-                nbsCode,
-                fullName,
-                class: document.getElementById('cls').value,
-                section: document.getElementById('sec').value
-            }) 
-        });
-        alert("Waa la keydiyey!");
-        document.getElementById('nbs').value = '';
-        document.getElementById('name').value = '';
-    }
-
-    // --- FETCH: GET LIST & PRINT ---
-    async function fetchList(type) {
-        const cls = document.getElementById('fCls').value;
-        const sec = document.getElementById('fSec').value;
-        const res = await fetch(`/api/students/${cls}/${sec}`);
-        const students = await res.json();
-        
-        let html = `<table><tr><th>NBS Code</th><th>Magaca</th><th>Action</th></tr>`;
-        students.forEach(s => {
-            html += `<tr><td>${s.nbsCode}</td><td>${s.fullName}</td><td>`;
-            if(type === 'att') {
-                html += `<button onclick="updateAtt('${s.nbsCode}', 'Present')" style="background:var(--g); width:40px;">P</button> 
-                         <button onclick="updateAtt('${s.nbsCode}', 'Absent')" style="background:var(--r); width:40px;">A</button>`;
+            const result = await response.json();
+            if (result.success) {
+                alert("✅ " + result.message);
+                document.querySelectorAll('input').forEach(i => i.value = '');
             }
-            if(type === 'fees') html += `$${s.fees.paid} <button onclick="payFee('${s.nbsCode}', ${s.fees.paid})" style="width:60px;">Pay</button>`;
-            if(type === 'exam') html += `<button onclick="addMark('${s.nbsCode}')" style="width:80px;">Marks</button>`;
-            
-            html += `<button onclick="deleteStudent('${s.nbsCode}')" class="btn-del no-print">🗑️ Delete</button>`;
-            html += `</td></tr>`;
-        });
-        document.getElementById('listArea').innerHTML = html + `</table><br><button class="no-print" onclick="window.print()">🖨️ DAABAC (PRINT)</button>`;
-    }
-
-    // --- FETCH: DELETE ---
-    async function deleteStudent(nbsCode) {
-        if(!confirm("Ma hubtaa inaad tirtirto ardaygan?")) return;
-        const res = await fetch(`/api/admin/student/${nbsCode}`, { method: 'DELETE' });
-        const data = await res.json();
-        if(data.success) {
-            alert(data.message);
-            location.reload(); 
+        } catch (err) {
+            alert("❌ Cilad: Server-ka ma shaqaynayo!");
         }
-    }
-
-    // --- FETCH: UPDATE DATA (Attendance & Fees) ---
-    async function updateAtt(nbsCode, status) {
-        const date = new Date().toLocaleDateString();
-        await fetch('/api/admin/save', { 
-            method: 'POST', 
-            headers: {'Content-Type': 'application/json'}, 
-            body: JSON.stringify({ nbsCode, $push: { attendance: { date, status } } }) 
-        });
-        alert("Xadiriska waa la keydiyey!");
-    }
-
-    async function payFee(nbsCode, current) {
-        const amount = prompt("Lacagta la bixinayo ($):");
-        if(amount) {
-            await fetch('/api/admin/save', { 
-                method: 'POST', 
-                headers: {'Content-Type': 'application/json'}, 
-                body: JSON.stringify({ nbsCode, "fees.paid": (parseInt(current) + parseInt(amount)) }) 
-            });
-            alert("Lacagta waa la cusubaysiiyey!");
-            fetchList('fees');
-        }
-    }
-
-    async function addMark(nbsCode) {
-        const sub = prompt("Maadada:");
-        const score = prompt("Dhibcaha:");
-        if(!sub || !score) return;
-        await fetch('/api/admin/save', { 
-            method: 'POST', 
-            headers: {'Content-Type': 'application/json'}, 
-            body: JSON.stringify({ nbsCode, $push: { "exams.exam1": { subject: sub, score: parseInt(score) } } }) 
-        });
-        alert("Dhibcaha waa la keydiyey!");
-    }
-
-    function stdDash() {
-        document.getElementById('stdContent').innerHTML = `<div class="card"><h1>Soo dhawoow, ${activeUser.fullName}</h1><p>NBS Code: ${activeUser.nbsCode}</p></div>`;
     }
 </script>
+
 </body>
 </html>

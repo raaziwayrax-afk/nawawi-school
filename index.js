@@ -6,40 +6,70 @@ const app = express();
 app.use(express.json());
 app.use(express.static('public'));
 
-// Isku xirka MongoDB
 mongoose.connect(process.env.MONGO_URI)
   .then(() => console.log('Connected to MongoDB Successfully'))
   .catch(err => console.error('MongoDB Connection Error:', err));
 
-// Schema-ka Ardayga oo aad u dheer
+// Schema-ka oo la ballaariyey (Full School Management)
 const studentSchema = new mongoose.Schema({
-    fullName: { type: String, required: true },     // Magaca Saddexan
-    motherName: { type: String, required: true },   // Magaca Hooyada
-    examNumber: { type: String, unique: true },     // Lambarka Imtixaanka
-    grade: { type: String, enum: ['9', '10', '11', '12'] }, // Fasalka
-    section: { type: String, enum: ['A', 'B', 'C'] },      // Qolka
-    parentPhone1: String,   // Lambarka Waalidka 1
-    parentPhone2: String,   // Lambarka Waalidka 2
+    fullName: { type: String, required: true },
+    motherName: { type: String, required: true },
+    examNumber: { type: String, unique: true },
+    grade: { type: String, enum: ['9', '10', '11', '12'] },
+    section: { type: String, enum: ['A', 'B', 'C'] },
+    parentPhone1: String,
+    // --- QAYBTA MAALIYADDA ---
+    monthlyFee: { type: Number, default: 0 }, // Lacagta bishii
+    paidAmount: { type: Number, default: 0 }, // Inta la bixiyey
+    // --- QAYBTA IMTIXAANKA ---
+    examScores: [{
+        subject: String,
+        score: Number,
+        term: String // Tusaale: Semester 1
+    }],
     attendance: [{
-        date: { type: String }, // Taariikhda (YYYY-MM-DD)
-        status: { type: String, enum: ['Present', 'Absent'] }
+        date: String,
+        status: String
     }]
 });
 
 const Student = mongoose.model('Student', studentSchema);
 
-// API: Diiwaangelinta Arday Cusub
+// API: Diiwaangelinta (Lagu daray Fee)
 app.post('/api/register', async (req, res) => {
     try {
         const student = new Student(req.body);
         await student.save();
-        res.json({ success: true, message: 'Ardayga waa la kaydiyay!' });
+        res.json({ success: true, message: 'Ardayga iyo xogta maaliyadda waa la kaydiyay!' });
     } catch (error) {
         res.status(500).json({ success: false, message: error.message });
     }
 });
 
-// API: Soo saarista Ardayda Fasal iyo Qol gaar ah
+// API: Cusboonaysiinta Lacagta (Fees)
+app.post('/api/pay-fee', async (req, res) => {
+    const { studentId, amount } = req.body;
+    try {
+        await Student.findByIdAndUpdate(studentId, { $inc: { paidAmount: amount } });
+        res.json({ success: true, message: 'Lacagta waa laga guddoomay!' });
+    } catch (error) {
+        res.status(500).json({ success: false });
+    }
+});
+
+// API: Gelinta Dhibcaha (Exam Scores)
+app.post('/api/add-score', async (req, res) => {
+    const { studentId, subject, score, term } = req.body;
+    try {
+        await Student.findByIdAndUpdate(studentId, {
+            $push: { examScores: { subject, score, term } }
+        });
+        res.json({ success: true, message: 'Dhibcaha waa la kaydiyay!' });
+    } catch (error) {
+        res.status(500).json({ success: false });
+    }
+});
+
 app.get('/api/filter', async (req, res) => {
     const { grade, section } = req.query;
     try {
@@ -50,20 +80,6 @@ app.get('/api/filter', async (req, res) => {
     }
 });
 
-// API: Kaydinta Xadirinta (Attendance)
-app.post('/api/attendance', async (req, res) => {
-    const { studentId, status, date } = req.body;
-    try {
-        await Student.findByIdAndUpdate(studentId, {
-            $push: { attendance: { status, date } }
-        });
-        res.json({ success: true });
-    } catch (error) {
-        res.status(500).json({ success: false });
-    }
-});
-
-// Inuu si toos ah u furo index.html marka link-ga la gujiyo
 app.get('*', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });

@@ -5,84 +5,113 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Nawawi School System</title>
     <style>
-        body { font-family: Arial; padding: 20px; background: #f4f4f4; }
-        .box { background: white; padding: 20px; border-radius: 8px; margin-bottom: 20px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
-        input, select, button { padding: 10px; margin: 5px; border-radius: 5px; border: 1px solid #ddd; }
-        button { background: #28a745; color: white; cursor: pointer; border: none; }
-        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-        th, td { border: 1px solid #ddd; padding: 10px; text-align: left; }
-        th { background: #eee; }
-        .nav { background: #2c3e50; color: white; padding: 15px; border-radius: 8px; margin-bottom: 20px; text-align: center; }
+        body { font-family: 'Segoe UI', Arial; padding: 20px; background: #f0f2f5; }
+        .box { background: white; padding: 20px; border-radius: 12px; margin-bottom: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+        input, select, button { padding: 12px; margin: 8px 5px; border-radius: 8px; border: 1px solid #ddd; outline: none; }
+        button { background: #28a745; color: white; cursor: pointer; border: none; font-weight: bold; transition: 0.3s; }
+        button:hover { opacity: 0.8; }
+        .nav { background: #2c3e50; color: white; padding: 20px; border-radius: 12px; margin-bottom: 20px; text-align: center; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; background: white; }
+        th, td { border: 1px solid #eee; padding: 15px; text-align: left; }
+        th { background: #f8f9fa; color: #333; }
+        .hidden { display: none; }
+        .admin-only { border-left: 5px solid #e74c3c; }
     </style>
 </head>
 <body>
 
-    <div class="nav">
-        <h1>Nawawi School System - Dashboard</h1>
+    <div id="loginPage" class="box" style="max-width: 400px; margin: 100px auto; text-align: center;">
+        <h2>LOGIN SYSTEM</h2>
+        <input type="text" id="username" placeholder="Username / Roll Number" style="width: 80%"><br>
+        <input type="password" id="password" placeholder="Password" style="width: 80%"><br>
+        <button onclick="login()" style="width: 85%; background: #2c3e50;">Soo gal</button>
     </div>
 
-    <div class="box">
-        <h3>1. Diiwaangeli Arday Cusub</h3>
-        <input type="text" id="fullName" placeholder="Magaca Saddexan">
-        <input type="text" id="motherName" placeholder="Magaca Hooyada">
-        <input type="text" id="examNumber" placeholder="Lambarka Imtixaanka">
-        <select id="regGrade">
-            <option value="9">Fasalka 9aad</option>
-            <option value="10">Fasalka 10aad</option>
-            <option value="11">Fasalka 11aad</option>
-            <option value="12">Fasalka 12aad</option>
-        </select>
-        <select id="regSection">
-            <option value="A">Qolka A</option>
-            <option value="B">Qolka B</option>
-            <option value="C">Qolka C</option>
-        </select>
-        <input type="text" id="phone1" placeholder="Tel Waalidka 1">
-        <input type="text" id="phone2" placeholder="Tel Waalidka 2">
-        <button onclick="registerStudent()">Save Ardayga</button>
-    </div>
+    <div id="mainDashboard" class="hidden">
+        <div class="nav">
+            <h1 id="welcomeText">Nawawi School Dashboard</h1>
+            <p id="userRoleBadge"></p>
+            <button onclick="logout()" style="background:#e74c3c; padding: 5px 15px;">Logout</button>
+        </div>
 
-    <div class="box">
-        <h3>2. Xadirinta Ardayda (Attendance)</h3>
-        <select id="filterGrade">
-            <option value="9">Fasalka 9aad</option>
-            <option value="10">Fasalka 10aad</option>
-            <option value="11">Fasalka 11aad</option>
-            <option value="12">Fasalka 12aad</option>
-        </select>
-        <select id="filterSection">
-            <option value="A">Qolka A</option>
-            <option value="B">Qolka B</option>
-            <option value="C">Qolka C</option>
-        </select>
-        <button onclick="fetchStudents()" style="background:#007bff">Soo saar Ardayda</button>
+        <div id="adminControls" class="box admin-only hidden">
+            <h3>Admin: Diiwaangeli Arday Cusub</h3>
+            <input type="text" id="fullName" placeholder="Magaca Saddexan">
+            <input type="text" id="motherName" placeholder="Magaca Hooyada">
+            <input type="text" id="examNumber" placeholder="Roll Number (NBS123)">
+            <select id="regGrade">
+                <option value="9">Fasalka 9aad</option>
+                <option value="10">Fasalka 10aad</option>
+                <option value="11">Fasalka 11aad</option>
+                <option value="12">Fasalka 12aad</option>
+            </select>
+            <button onclick="registerStudent()">Keydi Ardayga</button>
+        </div>
 
-        <table id="studentTable" style="display:none;">
-            <thead>
-                <tr>
-                    <th>Magaca</th>
-                    <th>Exam No</th>
-                    <th>Action</th>
-                </tr>
-            </thead>
-            <tbody id="studentList"></tbody>
-        </table>
+        <div id="attendanceArea" class="box hidden">
+            <h3>Xadirinta & Maamulka</h3>
+            <select id="filterGrade">
+                <option value="9">Fasalka 9aad</option>
+                <option value="10">Fasalka 10aad</option>
+                <option value="11">Fasalka 11aad</option>
+                <option value="12">Fasalka 12aad</option>
+            </select>
+            <button onclick="fetchStudents()" style="background:#007bff">Soo saar Liiska</button>
+            
+            <table id="studentTable" style="display:none;">
+                <thead><tr><th>Magaca</th><th>Roll No</th><th>Action</th></tr></thead>
+                <tbody id="studentList"></tbody>
+            </table>
+        </div>
+
+        <div id="studentProfile" class="box hidden">
+            <h3>Xogtaada Ardaynimo</h3>
+            <div id="myDetails"></div>
+        </div>
     </div>
 
     <script>
+        let currentUser = null;
+
+        function login() {
+            const user = document.getElementById('username').value;
+            const pass = document.getElementById('password').value;
+
+            if (user === 'admin' && pass === 'admin1234') {
+                currentUser = { role: 'admin', name: 'Adminstrator' };
+                loadDashboard();
+            } else if (pass === '123456' && user.length > 3) {
+                // Halkan ardaygu wuxuu ku galayaa Roll Number-kiisa
+                currentUser = { role: 'student', roll: user };
+                loadDashboard();
+            } else {
+                alert('Username ama Password waa khaldan yihiin!');
+            }
+        }
+
+        function loadDashboard() {
+            document.getElementById('loginPage').classList.add('hidden');
+            document.getElementById('mainDashboard').classList.remove('hidden');
+            document.getElementById('welcomeText').innerText = `Ku soo dhawaada, ${currentUser.name || currentUser.roll}`;
+
+            if (currentUser.role === 'admin') {
+                document.getElementById('adminControls').classList.remove('hidden');
+                document.getElementById('attendanceArea').classList.remove('hidden');
+            } else {
+                document.getElementById('studentProfile').classList.remove('hidden');
+                fetchMyData(currentUser.roll);
+            }
+        }
+
         async function registerStudent() {
             const data = {
                 fullName: document.getElementById('fullName').value,
                 motherName: document.getElementById('motherName').value,
                 examNumber: document.getElementById('examNumber').value,
                 grade: document.getElementById('regGrade').value,
-                section: document.getElementById('regSection').value,
-                parentPhone1: document.getElementById('phone1').value,
-                parentPhone2: document.getElementById('phone2').value
+                password: '123456' // Password-ka u dhashay ee arday kasta
             };
             
-            if(!data.fullName || !data.examNumber) return alert('Fadlan geli Magaca iyo Exam Number');
-
             const res = await fetch('/api/register', {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
@@ -90,23 +119,16 @@
             });
             const result = await res.json();
             alert(result.message);
-            if(result.success) location.reload();
         }
 
         async function fetchStudents() {
             const grade = document.getElementById('filterGrade').value;
-            const section = document.getElementById('filterSection').value;
-            const res = await fetch(`/api/filter?grade=${grade}&section=${section}`);
+            const res = await fetch(`/api/filter?grade=${grade}`);
             const students = await res.json();
             
             const list = document.getElementById('studentList');
             list.innerHTML = '';
             document.getElementById('studentTable').style.display = 'table';
-
-            if(students.length === 0) {
-                list.innerHTML = '<tr><td colspan="3" style="text-align:center">Wax arday ah laguma helin qolkan.</td></tr>';
-                return;
-            }
 
             students.forEach(s => {
                 list.innerHTML += `
@@ -114,23 +136,14 @@
                         <td>${s.fullName}</td>
                         <td>${s.examNumber}</td>
                         <td>
-                            <button style="background:blue; width:70px" onclick="mark('${s._id}', 'Present')">Jooga</button>
-                            <button style="background:red; width:70px" onclick="mark('${s._id}', 'Absent')">Maqan</button>
+                            <button onclick="mark('${s._id}', 'Present')">Jooga</button>
+                            <button style="background:red" onclick="deleteStudent('${s._id}')">Delete</button>
                         </td>
                     </tr>`;
             });
         }
 
-        async function mark(id, status) {
-            const date = new Date().toISOString().split('T')[0];
-            const res = await fetch('/api/attendance', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({ studentId: id, status, date })
-            });
-            const result = await res.json();
-            if(result.success) alert('Xogta xadirinta waa la keydiyay!');
-        }
+        function logout() { location.reload(); }
     </script>
 </body>
 </html>
